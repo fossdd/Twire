@@ -2,6 +2,8 @@ package com.perflyst.twire.model;
 
 import androidx.annotation.Nullable;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,8 +11,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IRCMessage {
-    static Pattern ircPattern = Pattern.compile("(?:@(.+) )?:.+ ([A-Z]+) #\\S*(?: :(.+))?"),
-            tagPattern = Pattern.compile("([^=]+)=?(.+)?");
+    static Pattern ircPattern = Pattern.compile("(?:@(.+) )?:.+ ([A-Z]+) #\\S*(?: :(.+))?");
+
+    static ImmutableMap<String, String> replacements = ImmutableMap.of(
+        "\\:", ";",
+        "\\s", " ",
+        "\\\\", "\\",
+        "\\r", "\r",
+        "\\n", "\n"
+    );
 
     public Map<String, String> tags;
     public String command;
@@ -37,27 +46,19 @@ public class IRCMessage {
         if (tagString == null)
             return Collections.emptyMap();
 
-        Map<String, String> replacements = new HashMap<>();
-        replacements.put("\\:", ";");
-        replacements.put("\\s", " ");
-        replacements.put("\\\\", "\\");
-        replacements.put("\\r", "\r");
-        replacements.put("\\n", "\n");
-
         Map<String, String> tags = new HashMap<>();
         for (String tag : tagString.split(";")) {
-            Matcher tagMatcher = tagPattern.matcher(tag);
-            if (tagMatcher.find()) {
-                String value = tagMatcher.group(2);
-                if (value == null)
-                    continue;
-
-                for (Map.Entry<String, String> entry : replacements.entrySet()) {
-                    value = value.replace(entry.getKey(), entry.getValue());
-                }
-
-                tags.put(tagMatcher.group(1), value);
+            int index = tag.indexOf('=');
+            if (index == tag.length() - 1 || index == -1) {
+                continue;
             }
+
+            String value = tag.substring(index + 1);
+            for (Map.Entry<String, String> entry : replacements.entrySet()) {
+                value = value.replace(entry.getKey(), entry.getValue());
+            }
+
+            tags.put(tag.substring(0, index), value);
         }
 
         return tags;
