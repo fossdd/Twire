@@ -452,8 +452,6 @@ public class StreamFragment extends Fragment implements Player.Listener {
 
             mCurrentProgressView.setOnClickListener(v -> showSeekDialog());
 
-            ChatManager.updateVodProgress(ChatManager.VOD_LOADING, true);
-
             TextView maxProgress = mRootView.findViewById(R.id.maxProgress);
             maxProgress.setText(Service.calculateTwitchVideoLength(vodLength));
 
@@ -720,7 +718,7 @@ public class StreamFragment extends Fragment implements Player.Listener {
             releasePlayer();
         }
 
-        ChatManager.setPreviousProgress();
+        ChatManager.instance.setPreviousProgress();
     }
 
     @Override
